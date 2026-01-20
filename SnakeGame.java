@@ -2,7 +2,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Random;
+import java.io.*;
 
 public class SnakeGame extends JPanel implements ActionListener {
     private final int TILE_SIZE = 25;
@@ -20,8 +23,15 @@ public class SnakeGame extends JPanel implements ActionListener {
 
     private char direction = 'R';
     private boolean running = false;
+    private boolean inStartScreen = true;
     private Timer timer;
     private Random random;
+
+    private List<Integer> scores = new ArrayList<>();
+    private final String SCORE_FILE = "scores.txt";
+
+    private JButton restartButton;
+    private JButton startButton;
 
     public SnakeGame() {
         random = new Random();
@@ -29,19 +39,72 @@ public class SnakeGame extends JPanel implements ActionListener {
         this.setBackground(Color.black);
         this.setFocusable(true);
         this.addKeyListener(new MyKeyAdapter());
-        startGame();
+        this.setLayout(null);
+
+        loadScores();
+
+        startButton = new JButton("Start Game");
+        startButton.setBounds(250, 450, 100, 40);
+        startButton.addActionListener(e -> {
+            inStartScreen = false;
+            startButton.setVisible(false);
+            startGame();
+        });
+        this.add(startButton);
+
+        restartButton = new JButton("Restart");
+        restartButton.setBounds(250, 400, 100, 40);
+        restartButton.setVisible(false);
+        restartButton.addActionListener(e -> restartGame());
+        this.add(restartButton);
     }
 
     public void startGame() {
+        bodyParts = 3;
+        applesEaten = 0;
+        direction = 'R';
+        for(int i = 0; i < bodyParts; i++) {
+            x[i] = 50 - i * TILE_SIZE;
+            y[i] = 50;
+        }
         newApple();
         running = true;
+        if (timer != null) timer.stop();
         timer = new Timer(75, this);
         timer.start();
+        restartButton.setVisible(false);
+    }
+
+    public void restartGame() {
+        restartButton.setVisible(false);
+        startGame();
     }
 
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
-        draw(g);
+        if (inStartScreen) {
+            drawStartScreen(g);
+        } else {
+            draw(g);
+        }
+    }
+
+    private void drawStartScreen(Graphics g) {
+        g.setColor(Color.green);
+        g.setFont(new Font("Ink Free", Font.BOLD, 75));
+        FontMetrics metrics = getFontMetrics(g.getFont());
+        g.drawString("Snake Game", (WIDTH - metrics.stringWidth("Snake Game")) / 2, 100);
+
+        g.setColor(Color.white);
+        g.setFont(new Font("Ink Free", Font.BOLD, 30));
+        g.drawString("Leaderboard:", 200, 200);
+        
+        g.setFont(new Font("Ink Free", Font.PLAIN, 20));
+        int yPos = 240;
+        for (int i = 0; i < Math.min(scores.size(), 5); i++) {
+            g.drawString((i + 1) + ". " + scores.get(i), 250, yPos);
+            yPos += 30;
+        }
     }
 
     public void draw(Graphics g) {
@@ -105,6 +168,9 @@ public class SnakeGame extends JPanel implements ActionListener {
         }
         if (!running) {
             timer.stop();
+            saveScore(applesEaten);
+            loadScores();
+            restartButton.setVisible(true);
         }
     }
 
@@ -118,6 +184,30 @@ public class SnakeGame extends JPanel implements ActionListener {
         g.setFont(new Font("Ink Free", Font.BOLD, 40));
         FontMetrics metrics2 = getFontMetrics(g.getFont());
         g.drawString("Score: " + applesEaten, (WIDTH - metrics2.stringWidth("Score: " + applesEaten)) / 2, g.getFont().getSize());
+    }
+
+    private void saveScore(int score) {
+        try (PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(SCORE_FILE, true)))) {
+            out.println(score);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void loadScores() {
+        scores.clear();
+        File file = new File(SCORE_FILE);
+        if (file.exists()) {
+            try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    scores.add(Integer.parseInt(line.trim()));
+                }
+            } catch (IOException | NumberFormatException e) {
+                e.printStackTrace();
+            }
+        }
+        Collections.sort(scores, Collections.reverseOrder());
     }
 
     @Override
@@ -134,10 +224,22 @@ public class SnakeGame extends JPanel implements ActionListener {
         @Override
         public void keyPressed(KeyEvent e) {
             switch (e.getKeyCode()) {
-                case KeyEvent.VK_LEFT: if (direction != 'R') direction = 'L'; break;
-                case KeyEvent.VK_RIGHT: if (direction != 'L') direction = 'R'; break;
-                case KeyEvent.VK_UP: if (direction != 'D') direction = 'U'; break;
-                case KeyEvent.VK_DOWN: if (direction != 'U') direction = 'D'; break;
+                case KeyEvent.VK_LEFT:
+                case KeyEvent.VK_A:
+                    if (direction != 'R') direction = 'L';
+                    break;
+                case KeyEvent.VK_RIGHT:
+                case KeyEvent.VK_D:
+                    if (direction != 'L') direction = 'R';
+                    break;
+                case KeyEvent.VK_UP:
+                case KeyEvent.VK_W:
+                    if (direction != 'D') direction = 'U';
+                    break;
+                case KeyEvent.VK_DOWN:
+                case KeyEvent.VK_S:
+                    if (direction != 'U') direction = 'D';
+                    break;
             }
         }
     }
