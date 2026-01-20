@@ -160,10 +160,10 @@ public class SnakeGame extends JPanel implements ActionListener {
         }
 
         switch (direction) {
-            case 'U': y[0] = y[0] - TILE_SIZE; break;
-            case 'D': y[0] = y[0] + TILE_SIZE; break;
-            case 'L': x[0] = x[0] - TILE_SIZE; break;
-            case 'R': x[0] = x[0] + TILE_SIZE; break;
+            case 'U': y[0] = (y[0] - TILE_SIZE + HEIGHT) % HEIGHT; break;
+            case 'D': y[0] = (y[0] + TILE_SIZE) % HEIGHT; break;
+            case 'L': x[0] = (x[0] - TILE_SIZE + WIDTH) % WIDTH; break;
+            case 'R': x[0] = (x[0] + TILE_SIZE) % WIDTH; break;
         }
     }
 
@@ -181,9 +181,7 @@ public class SnakeGame extends JPanel implements ActionListener {
                 running = false;
             }
         }
-        if (x[0] < 0 || x[0] >= WIDTH || y[0] < 0 || y[0] >= HEIGHT) {
-            running = false;
-        }
+        
         if (!running) {
             timer.stop();
             saveScore(applesEaten);
