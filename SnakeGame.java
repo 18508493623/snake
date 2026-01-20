@@ -32,6 +32,7 @@ public class SnakeGame extends JPanel implements ActionListener {
 
     private JButton restartButton;
     private JButton startButton;
+    private JButton returnButton;
 
     public SnakeGame() {
         random = new Random();
@@ -57,6 +58,12 @@ public class SnakeGame extends JPanel implements ActionListener {
         restartButton.setVisible(false);
         restartButton.addActionListener(e -> restartGame());
         this.add(restartButton);
+
+        returnButton = new JButton("Return");
+        returnButton.setBounds(250, 450, 100, 40);
+        returnButton.setVisible(false);
+        returnButton.addActionListener(e -> returnToMenu());
+        this.add(returnButton);
     }
 
     public void startGame() {
@@ -73,11 +80,22 @@ public class SnakeGame extends JPanel implements ActionListener {
         timer = new Timer(75, this);
         timer.start();
         restartButton.setVisible(false);
+        returnButton.setVisible(false);
     }
 
     public void restartGame() {
         restartButton.setVisible(false);
+        returnButton.setVisible(false);
         startGame();
+    }
+
+    public void returnToMenu() {
+        inStartScreen = true;
+        running = false;
+        restartButton.setVisible(false);
+        returnButton.setVisible(false);
+        startButton.setVisible(true);
+        repaint();
     }
 
     public void paintComponent(Graphics g) {
@@ -171,6 +189,7 @@ public class SnakeGame extends JPanel implements ActionListener {
             saveScore(applesEaten);
             loadScores();
             restartButton.setVisible(true);
+            returnButton.setVisible(true);
         }
     }
 
